@@ -5,6 +5,7 @@ void setup(void);
 void loop(void);
 void delay_ms(uint16_t ms);
 
+#define MAX_PROGRAMS 3
 uint8_t EEMEM ProgramConfig = 0;
 int program = 0;
 
@@ -12,11 +13,11 @@ int main(void) {
   setup();
 
   program = eeprom_read_byte(&ProgramConfig);
-  if (program > 1) {
+  if (program >= MAX_PROGRAMS) {
     program = 0;
   }
 
-  eeprom_write_byte(&ProgramConfig, 1 - program);
+  eeprom_write_byte(&ProgramConfig, program + 1);
   while (1) {
     loop();
   }
@@ -38,9 +39,15 @@ const uint8_t states[] = {
 };
 
 void loop() {
-  if (program) {
+  switch (program) {
+  case 0:
     blink();
-  } else {
+    break;
+  case 1:
+    flash();
+    break;
+  case 2:
+  default:
     allOn();
   }
 }
@@ -50,7 +57,6 @@ unsigned long lastBlink = 0;
 unsigned long clock = 0;
 
 void blink() {
-
   if (clock - lastBlink > 15000) {
     blinkState++;
     if (blinkState > 4) {
@@ -60,6 +66,21 @@ void blink() {
   }
 
   PORTB = states[blinkState];
+
+  clock++;
+}
+
+void flash() {
+  if (clock - lastBlink > 20000) {
+    blinkState = 1 - blinkState;
+    lastBlink = clock;
+  }
+
+  if (blinkState) {
+    allOn();
+  } else {
+    PORTB = 0;
+  }
 
   clock++;
 }
