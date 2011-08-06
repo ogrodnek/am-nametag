@@ -5,6 +5,13 @@ void setup(void);
 void loop(void);
 void delay_ms(uint16_t ms);
 
+void blink(void);
+void flash(void);
+void fade(void);
+void pwm(void);
+void allOn(void);
+
+
 #define MAX_PROGRAMS 3
 uint8_t EEMEM ProgramConfig = 0;
 int program = 0;
@@ -83,6 +90,40 @@ void flash() {
   }
 
   clock++;
+}
+
+uint8_t level = 0;
+uint8_t pwmCount = 0;
+uint8_t dir = 1;
+
+void fade() {
+  if (clock - lastBlink > 900000) {
+    blinkState = 1 - blinkState;
+    lastBlink = clock;
+  }
+
+  if (blinkState) {
+    if (level == 255) {
+      dir = -1;
+    } else if (level == 0) {
+      dir = 1;
+    }
+
+    level += dir;
+  }
+
+  pwm();
+
+  clock++;
+}
+
+void pwm() {
+  pwmCount++;
+  if (level > pwmCount) {
+    allOn();
+  } else {
+    PORTB = 0;
+  }
 }
 
 void allOn() {
