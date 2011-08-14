@@ -48,10 +48,10 @@ const uint8_t states[] = {
 void loop() {
   switch (program) {
   case 0:
-    blink();
+    allOn();
     break;
   case 1:
-    flash();
+    blink();
     break;
   case 2:
   default:
@@ -64,7 +64,7 @@ unsigned long lastBlink = 0;
 unsigned long clock = 0;
 
 void blink() {
-  if (clock - lastBlink > 15000) {
+  if (clock - lastBlink > 25000) {
     blinkState++;
     if (blinkState > 4) {
       blinkState = 0;
@@ -127,8 +127,15 @@ void pwm() {
 }
 
 void allOn() {
-  int i;
-  for (i=0; i< 5; i++) {
-    PORTB = states[i];
+  if (clock - lastBlink > 2) {
+    blinkState++;
+    if (blinkState > 4) {
+      blinkState = 0;
+    }
+    lastBlink = clock;
   }
+
+  PORTB = states[blinkState];
+
+  clock++;
 }
