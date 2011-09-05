@@ -12,7 +12,7 @@ void pwm(void);
 void allOn(void);
 
 
-#define MAX_PROGRAMS 3
+#define MAX_PROGRAMS 4
 uint8_t EEMEM ProgramConfig = 0;
 int program = 0;
 
@@ -54,12 +54,17 @@ void loop() {
     blink();
     break;
   case 2:
+    fade();
+    break;
+  case 3:
+    flash();
+    break;
   default:
     allOn();
   }
 }
 
-int blinkState = 0;
+uint8_t blinkState = 0;
 unsigned long lastBlink = 0;
 unsigned long clock = 0;
 
@@ -77,14 +82,21 @@ void blink() {
   clock++;
 }
 
+uint8_t flashState = 0;
+
 void flash() {
-  if (clock - lastBlink > 20000) {
-    blinkState = 1 - blinkState;
+  if (clock - lastBlink > 30000) {
+    flashState = 1 - flashState;
     lastBlink = clock;
   }
 
-  if (blinkState) {
-    allOn();
+  if (flashState) {
+    blinkState++;
+    if (blinkState > 4) {
+      blinkState = 0;
+    }
+
+    PORTB=states[blinkState];
   } else {
     PORTB = 0;
   }
@@ -97,19 +109,13 @@ uint8_t pwmCount = 0;
 uint8_t dir = 1;
 
 void fade() {
-  if (clock - lastBlink > 900000) {
-    blinkState = 1 - blinkState;
+  if (clock - lastBlink > 1800) {
     lastBlink = clock;
-  }
-
-  if (blinkState) {
-    if (level == 255) {
-      dir = -1;
-    } else if (level == 0) {
-      dir = 1;
-    }
 
     level += dir;
+    if (level == 0 || level >= 200) {
+      dir = -1 * dir;
+    }
   }
 
   pwm();
@@ -117,10 +123,20 @@ void fade() {
   clock++;
 }
 
+unsigned long lastPwm = 0;
+
 void pwm() {
-  pwmCount++;
-  if (level > pwmCount) {
-    allOn();
+  static uint8_t pwmCnt = 0;
+  static uint8_t which = 0;
+
+  pwmCnt++;
+
+  if (level > pwmCnt) {
+    PORTB = states[which];
+    which++;
+    if (which > 4) {
+      which = 0;
+    }
   } else {
     PORTB = 0;
   }
