@@ -123,8 +123,6 @@ void fade() {
   clock++;
 }
 
-unsigned long lastPwm = 0;
-
 void pwm() {
   static uint8_t pwmCnt = 0;
   static uint8_t which = 0;
