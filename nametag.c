@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <avr/eeprom.h> 
+#include <util/delay.h>
 
 void setup(void);
 void loop(void);
@@ -11,6 +12,12 @@ void fade(void);
 void pwm(void);
 void allOn(void);
 
+void delay_ms(uint16_t ms) {
+  while (ms) {
+    _delay_ms(1);
+    ms--;
+  }
+}
 
 #define MAX_PROGRAMS 4
 uint8_t EEMEM ProgramConfig = 0;
@@ -19,12 +26,6 @@ int program = 0;
 int main(void) {
   setup();
 
-  program = eeprom_read_byte(&ProgramConfig);
-  if (program >= MAX_PROGRAMS) {
-    program = 0;
-  }
-
-  eeprom_write_byte(&ProgramConfig, program + 1);
   while (1) {
     loop();
   }
@@ -45,36 +46,45 @@ const uint8_t states[] = {
   0b00010000
 };
 
+uint8_t blinkState = 0;
+unsigned long totalBlinks = 0;
+
 void loop() {
-  switch (program) {
-  case 0:
-    allOn();
-    break;
-  case 1:
+
+  unsigned long blinks = totalBlinks;
+
+  blinkState = 0;
+  while (totalBlinks - blinks < 2) {
     blink();
-    break;
-  case 2:
-    fade();
-    break;
-  case 3:
-    flash();
-    break;
-  default:
-    allOn();
   }
+
+  delay_ms(1000);
+
+  blinks = totalBlinks;
+
+  PORTB=0;
+  blinkState = 3;
+  while (totalBlinks - blinks < 8) {
+    flash();
+  }
+
+  blinkState = 0;
+  PORTB=0;
+
+  delay_ms(1000);
 }
 
-uint8_t blinkState = 0;
 unsigned long lastBlink = 0;
 unsigned long clock = 0;
 
 void blink() {
-  if (clock - lastBlink > 25000) {
+  if (clock - lastBlink > 70000) {
     blinkState++;
-    if (blinkState > 4) {
+    if (blinkState > 2) {
       blinkState = 0;
     }
     lastBlink = clock;
+    totalBlinks++;
   }
 
   PORTB = states[blinkState];
@@ -83,17 +93,17 @@ void blink() {
 }
 
 uint8_t flashState = 0;
-
 void flash() {
   if (clock - lastBlink > 30000) {
     flashState = 1 - flashState;
     lastBlink = clock;
+    totalBlinks++;
   }
 
   if (flashState) {
     blinkState++;
     if (blinkState > 4) {
-      blinkState = 0;
+      blinkState = 3;
     }
 
     PORTB=states[blinkState];
@@ -107,38 +117,6 @@ void flash() {
 uint8_t level = 0;
 uint8_t pwmCount = 0;
 uint8_t dir = 1;
-
-void fade() {
-  if (clock - lastBlink > 1800) {
-    lastBlink = clock;
-
-    level += dir;
-    if (level == 0 || level >= 200) {
-      dir = -1 * dir;
-    }
-  }
-
-  pwm();
-
-  clock++;
-}
-
-void pwm() {
-  static uint8_t pwmCnt = 0;
-  static uint8_t which = 0;
-
-  pwmCnt++;
-
-  if (level > pwmCnt) {
-    PORTB = states[which];
-    which++;
-    if (which > 4) {
-      which = 0;
-    }
-  } else {
-    PORTB = 0;
-  }
-}
 
 void allOn() {
   if (clock - lastBlink > 2) {
