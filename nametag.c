@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <avr/eeprom.h> 
+#include <avr/sleep.h>
 
 void setup(void);
 void loop(void);
@@ -12,9 +13,10 @@ void pwm(void);
 void allOn(void);
 
 
-#define MAX_PROGRAMS 4
+#define MAX_PROGRAMS 5
 uint8_t EEMEM ProgramConfig = 0;
 int program = 0;
+unsigned long clock = 0;
 
 int main(void) {
   setup();
@@ -59,14 +61,23 @@ void loop() {
   case 3:
     flash();
     break;
+  case 4:
+    sleep();
+    break;
   default:
     allOn();
   }
 }
 
+void sleep() {
+  if (clock > 100000) {
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_mode();
+  }
+}
+
 uint8_t blinkState = 0;
 unsigned long lastBlink = 0;
-unsigned long clock = 0;
 
 void blink() {
   if (clock - lastBlink > 25000) {
