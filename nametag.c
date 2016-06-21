@@ -4,8 +4,7 @@
 
 void setup(void);
 void loop(void);
-void delay_ms(uint16_t ms);
-
+void sleep(void);
 void blink(void);
 void flash(void);
 void fade(void);
