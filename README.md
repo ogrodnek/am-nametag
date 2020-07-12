@@ -1,3 +1,5 @@
+![CI](https://github.com/ogrodnek/am-nametag/workflows/CI/badge.svg)
+
 HELLO! My Name Is LED Nametag Kit
 =================================
 
