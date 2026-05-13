@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@master
-    - uses: bazhenov/action-avr-make@v1.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        persist-credentials: false
+    - uses: bazhenov/action-avr-make@ed9a8a620ddc0bb6407e046f593975a1130e0a71 # v1.0
